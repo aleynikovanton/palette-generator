@@ -4,21 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Hue-Shift Palette Generator (Oklch)</title>
+    <title>Advanced Hue-Shift Palette Generator</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/2.4.2/chroma.min.js"></script>
     <style>
         :root {
-            --bg-color: #0f1014;
-            --surface-color: #1a1c23;
-            --surface-hover: #252832;
-            --text-primary: #ffffff;
-            --text-secondary: #9094a6;
-            --border-color: #2b2e3b;
-            --accent-color: #4facfe;
-            --accent-glow: rgba(79, 172, 254, 0.4);
-
-            --checkers: repeating-conic-gradient(#2b2e3b 0% 25%, transparent 0% 50%) 50% / 10px 10px;
+            --bg-base: #111113;
+            --text-base: #ffffff;
+            --accent: #027bf3;
+            --checkers: repeating-conic-gradient(rgba(128, 128, 128, 0.1) 0% 25%, transparent 0% 50%) 50% / 10px 10px;
         }
 
         * {
@@ -29,51 +23,26 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-primary);
+            background-color: var(--bg-base);
+            color: var(--text-base);
             min-height: 100vh;
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 40px 20px;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 1200px;
-            background: var(--surface-color);
-            border-radius: 16px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-            border: 1px solid var(--border-color);
-            overflow: hidden;
-            display: grid;
-            grid-template-columns: 350px 1fr;
-        }
-
-        /* Sidebar sidebar */
-        .sidebar {
             padding: 30px;
-            border-right: 1px solid var(--border-color);
+            gap: 40px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .sidebar {
+            width: 320px;
+            flex-shrink: 0;
             display: flex;
             flex-direction: column;
             gap: 24px;
-            background: linear-gradient(180deg, rgba(26, 28, 35, 1) 0%, rgba(20, 22, 28, 1) 100%);
-            z-index: 20;
         }
 
-        .header h1 {
-            font-size: 24px;
-            font-weight: 600;
-            background: linear-gradient(90deg, #4facfe, #00f2fe);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 8px;
-        }
-
-        .header p {
-            font-size: 13px;
-            color: var(--text-secondary);
-            line-height: 1.5;
+        .content {
+            flex-grow: 1;
+            overflow-x: auto;
         }
 
         .control-group {
@@ -85,41 +54,62 @@
         .control-group label {
             font-size: 13px;
             font-weight: 500;
-            color: var(--text-secondary);
+            opacity: 0.7;
         }
 
         input[type="text"] {
             width: 100%;
-            background: #111217;
-            border: 1px solid var(--border-color);
+            background: rgba(128, 128, 128, 0.1);
+            border: none;
             border-radius: 8px;
-            padding: 12px 16px;
-            color: #fff;
-            font-size: 14px;
+            padding: 10px 12px;
+            color: inherit;
             font-family: monospace;
-            transition: all 0.2s;
+            font-size: 14px;
             outline: none;
         }
 
         input[type="text"]:focus {
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 3px var(--accent-glow);
+            box-shadow: 0 0 0 2px var(--accent);
         }
 
-        .color-input-wrapper {
+        .color-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .color-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .color-input-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .color-input-row input[type="text"] {
+            flex-grow: 1;
+        }
+
+        .remove-btn {
+            background: none;
+            border: none;
+            color: inherit;
+            opacity: 0.5;
+            padding: 4px;
+            cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 12px;
-            background: #111217;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 8px 12px;
-            transition: all 0.2s;
+            justify-content: center;
         }
 
-        .color-input-wrapper:focus-within {
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 3px var(--accent-glow);
+        .remove-btn:hover {
+            opacity: 1;
+            color: #ff4d4f;
         }
 
         input[type="color"] {
@@ -140,562 +130,470 @@
         input[type="color"]::-webkit-color-swatch {
             border: none;
             border-radius: 6px;
-            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
         }
 
-        .color-input-wrapper input[type="text"] {
-            background: transparent;
+        .btn {
+            background: var(--accent);
+            color: #fff;
             border: none;
-            padding: 0;
-            margin: 0;
-            box-shadow: none !important;
-        }
-
-        .switch-theme-btn,
-        .export-btn {
-            background: var(--surface-hover);
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
             border-radius: 8px;
-            padding: 10px;
-            font-size: 13px;
+            padding: 12px;
+            font-size: 14px;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.2s;
-            font-family: inherit;
+            transition: filter 0.2s;
         }
 
-        .export-btn {
-            background: rgba(79, 172, 254, 0.1);
-            color: #4facfe;
-            border-color: rgba(79, 172, 254, 0.3);
-            margin-top: auto;
+        .btn:hover {
+            filter: brightness(1.1);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px dashed rgba(128, 128, 128, 0.4);
+            color: inherit;
+        }
+
+        .btn-outline:hover {
+            opacity: 1;
+            border-color: inherit;
+        }
+
+        .palette-table {
             display: flex;
-            align-items: center;
-            justify-content: center;
+            gap: 32px;
+            padding-bottom: 40px;
+        }
+
+        .palette-col {
+            display: flex;
+            flex-direction: column;
             gap: 8px;
         }
 
-        .switch-theme-btn:hover {
-            background: #2e313d;
-        }
-
-        .export-btn:hover {
-            background: rgba(79, 172, 254, 0.2);
-        }
-
-        /* Content area */
-        .content {
-            padding: 40px;
-            display: flex;
-            flex-direction: column;
-            gap: 30px;
-            overflow-y: auto;
-            max-height: 90vh;
-            background-color: var(--bg-preview-color);
-            /* Dynamic Background */
-            transition: background-color 0.3s ease;
-            position: relative;
-        }
-
-        .content::before {
-            content: "Preview Background matches Low Contrast Base";
-            position: absolute;
-            top: 10px;
-            right: 20px;
-            font-size: 11px;
-            color: var(--text-preview-color);
-            opacity: 0.5;
-            font-weight: 500;
-        }
-
-        /* Scrollbar */
-        .content::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .content::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .content::-webkit-scrollbar-thumb {
-            background: rgba(128, 128, 128, 0.3);
-            border-radius: 4px;
-        }
-
-        .content::-webkit-scrollbar-thumb:hover {
-            background: rgba(128, 128, 128, 0.5);
-        }
-
-        .palette-grid {
-            display: grid;
-            grid-template-columns: 50px 1fr 1fr;
-            gap: 16px;
-        }
-
         .palette-header {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-preview-color);
-            opacity: 0.7;
+            font-size: 12px;
             font-weight: 600;
+            opacity: 0.5;
             padding-bottom: 8px;
-            border-bottom: 1px solid rgba(128, 128, 128, 0.2);
         }
 
-        .palette-row {
-            display: contents;
-        }
-
-        .palette-weight {
+        .palette-cell {
+            height: 48px;
             display: flex;
-            flex-direction: column;
-            justify-content: center;
-            font-size: 14px;
-            color: var(--text-preview-color);
+            align-items: center;
+        }
+
+        .weight-cell {
+            width: 40px;
             font-weight: 600;
+            font-size: 14px;
+            opacity: 0.7;
+            justify-content: flex-end;
+            padding-right: 12px;
         }
 
         .color-block {
+            width: 140px;
+            height: 48px;
+            border-radius: 8px;
             display: flex;
             flex-direction: column;
-            border-radius: 12px;
-            overflow: hidden;
-            border: 1px solid rgba(128, 128, 128, 0.1);
-            background: rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(10px);
-            transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            justify-content: center;
+            padding: 0 12px;
+            border: none;
         }
 
-        .color-block:hover {
-            transform: translateY(-2px);
-            z-index: 10;
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
-
-        .color-preview {
-            height: 56px;
-            width: 100%;
-        }
-
-        .color-preview.alpha-bg {
-            background-color: var(--bg-preview-color);
-            background-image: repeating-conic-gradient(rgba(128, 128, 128, 0.1) 0% 25%, transparent 0% 50%);
-            background-size: 10px 10px;
-        }
-
-        .color-info {
-            padding: 12px 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            background: inherit;
-        }
-
-        .color-format {
+        .format-row {
             display: flex;
             justify-content: space-between;
-            align-items: center;
             font-family: monospace;
-            font-size: 11px;
-        }
-
-        .format-label {
-            color: var(--text-preview-color);
-            opacity: 0.6;
-            font-weight: 500;
             font-size: 10px;
-        }
-
-        .format-value {
-            color: var(--text-preview-color);
             opacity: 0.9;
         }
 
-        .missing-alpha {
+        .alpha-wrap {
+            width: 140px;
+            height: 48px;
+            border-radius: 8px;
+            background-color: var(--bg-base);
+            background-image: var(--checkers);
+            overflow: hidden;
+            border: none;
+        }
+
+        .alpha-inner {
+            width: 100%;
             height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0 12px;
+        }
+
+        .missing {
+            opacity: 0.2;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
-            color: var(--text-preview-color);
+            width: 140px;
+            height: 48px;
             font-size: 12px;
-            opacity: 0.3;
-            background: rgba(255, 255, 255, 0.02);
         }
 
-        @media (max-width: 768px) {
-            .container {
-                grid-template-columns: 1fr;
-            }
-
-            .sidebar {
-                border-right: none;
-                border-bottom: 1px solid var(--border-color);
-            }
-
-            .content {
-                max-height: none;
-            }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            user-select: none;
         }
     </style>
 </head>
 
 <body>
 
-    <div class="container">
-        <div class="sidebar">
-            <div class="header">
-                <h1>Oklch Advanced</h1>
-                <p>Фиксированный Hue, динамический закрашенный фон и плавный Hue Shift алгоритм (В стиле Tailwind &
-                    Radix).</p>
-            </div>
-
-            <div class="control-group">
-                <label>Theme Context</label>
-                <button class="switch-theme-btn" id="themeSwitch">Current: Dark Theme</button>
-            </div>
-
-            <div class="control-group">
-                <label>Название цвета (Prefix)</label>
-                <input type="text" id="colorName" value="brand">
-            </div>
-
-            <div class="control-group">
-                <label>Основной цвет (Main Color, HEX)</label>
-                <div class="color-input-wrapper">
-                    <input type="color" id="mainColorPicker" value="#027bf3">
-                    <input type="text" id="mainColorText" value="#027bf3">
-                </div>
-            </div>
-
-            <div class="control-group">
-                <label>Low Contrast Base (Фон, HEX)</label>
-                <div class="color-input-wrapper">
-                    <input type="color" id="lowBasePicker" value="#111113">
-                    <input type="text" id="lowBaseText" value="#111113">
-                </div>
-            </div>
-
-            <div class="control-group">
-                <label>High Contrast Base (Текст, HEX)</label>
-                <div class="color-input-wrapper">
-                    <input type="color" id="highBasePicker" value="#ffffff">
-                    <input type="text" id="highBaseText" value="#ffffff">
-                </div>
-            </div>
-
-            <button class="export-btn" id="exportSvgBtn">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" />
-                    <line x1="12" y1="15" x2="12" y2="3" />
-                </svg>
-                Экспорт палитры в SVG
-            </button>
+    <div class="sidebar">
+        <div>
+            <h1 style="font-size: 20px; font-weight: 600; margin-bottom: 8px;">Oklch Generator</h1>
+            <p style="font-size: 13px; opacity: 0.7;">Dynamic Custom Colors, No Dark Borders, SVG Clipboard Export.</p>
         </div>
 
-        <div class="content" id="previewContent">
-            <div class="palette-grid" id="paletteGrid">
-                <div class="palette-header">Шаг</div>
-                <div class="palette-header">Solid Color</div>
-                <div class="palette-header">Alpha Color</div>
-                <!-- Generated rows will go here -->
+        <button class="btn btn-outline" id="themeSwitchBtn" style="border-style: solid;">Theme: Dark</button>
+
+        <div class="control-group">
+            <label>Low Contrast Base (Фон)</label>
+            <div class="color-input-row">
+                <input type="color" id="lowBasePicker" value="#111113">
+                <input type="text" id="lowBaseText" value="#111113">
             </div>
         </div>
+        <div class="control-group">
+            <label>High Contrast Base (Текст)</label>
+            <div class="color-input-row">
+                <input type="color" id="highBasePicker" value="#ffffff">
+                <input type="text" id="highBaseText" value="#ffffff">
+            </div>
+        </div>
+
+        <label class="checkbox-label">
+            <input type="checkbox" id="showAlphaCheck" checked> Показывать Alpha
+        </label>
+
+        <hr style="border: none; border-top: 1px dashed rgba(128,128,128,0.3);">
+
+        <div class="control-group">
+            <label>Базовые цвета</label>
+            <div class="color-list" id="colorList"></div>
+            <button class="btn btn-outline" id="addColorBtn">+ Добавить цвет</button>
+        </div>
+
+        <button class="btn" id="exportSvgBtn" style="margin-top: 20px;">
+            Скопировать SVG в буфер
+        </button>
+    </div>
+
+    <div class="content">
+        <div class="palette-table" id="paletteTable"></div>
     </div>
 
     <script>
         const colorsMap = {
-            50: { a: 0.1, c: -1 },
-            100: { a: 0.15, c: -1 },
-            150: { a: 0.2, c: -1 },
-            200: { a: 0.3, c: -1 },
-            250: { a: 0.4, c: -1 },
-            300: { a: 0.5, c: -1 },
-            350: { a: 0.6, c: -1 },
-            400: { a: 0.7, c: -1 },
-            450: { a: 0.8, c: -1 },
-            500: { a: 0.9, c: -1 },
-            550: { a: 1, c: 1 },
-            600: { a: 0.9, c: 1 },
-            650: { a: 0.8, c: 1 },
-            700: { a: 0.7, c: 1 },
-            750: { a: 0.6, c: 1 },
-            800: { a: 0.5, c: 1 },
-            850: { a: 0.4, c: 1 },
-            900: { a: 0.3, c: 1 },
-            950: { a: 0.2, c: 1 },
-            1000: { a: 0.15, c: 1 },
+            50: { a: 0.1, c: -1 }, 100: { a: 0.15, c: -1 }, 150: { a: 0.2, c: -1 }, 200: { a: 0.3, c: -1 },
+            250: { a: 0.4, c: -1 }, 300: { a: 0.5, c: -1 }, 350: { a: 0.6, c: -1 }, 400: { a: 0.7, c: -1 },
+            450: { a: 0.8, c: -1 }, 500: { a: 0.9, c: -1 }, 550: { a: 1, c: 1 }, 600: { a: 0.9, c: 1 },
+            650: { a: 0.8, c: 1 }, 700: { a: 0.7, c: 1 }, 750: { a: 0.6, c: 1 }, 800: { a: 0.5, c: 1 },
+            850: { a: 0.4, c: 1 }, 900: { a: 0.3, c: 1 }, 950: { a: 0.2, c: 1 }, 1000: { a: 0.15, c: 1 },
         };
 
         const themes = {
-            light: { low: '#ffffff', high: '#111113', name: 'Light Theme' },
-            dark: { low: '#111113', high: '#ffffff', name: 'Dark Theme' }
+            light: { low: '#ffffff', high: '#111113', name: 'Light' },
+            dark: { low: '#111113', high: '#ffffff', name: 'Dark' }
         };
 
         let currentTheme = 'dark';
-        let currentPaletteData = {};
+        let showAlpha = true;
+        let baseColors = [
+            { id: Date.now(), hex: '#027bf3', name: 'Brand' }
+        ];
 
-        // DOM Elements
-        const themeSwitch = document.getElementById('themeSwitch');
-        const colorName = document.getElementById('colorName');
-        const mainColorPicker = document.getElementById('mainColorPicker');
-        const mainColorText = document.getElementById('mainColorText');
+        const themeSwitchBtn = document.getElementById('themeSwitchBtn');
         const lowBasePicker = document.getElementById('lowBasePicker');
         const lowBaseText = document.getElementById('lowBaseText');
         const highBasePicker = document.getElementById('highBasePicker');
         const highBaseText = document.getElementById('highBaseText');
-        const paletteGrid = document.getElementById('paletteGrid');
+        const showAlphaCheck = document.getElementById('showAlphaCheck');
+        const colorList = document.getElementById('colorList');
+        const addColorBtn = document.getElementById('addColorBtn');
+        const paletteTable = document.getElementById('paletteTable');
         const exportSvgBtn = document.getElementById('exportSvgBtn');
-        const previewContent = document.getElementById('previewContent');
 
-        function setupSync(picker, text, renderCallback) {
-            picker.addEventListener('input', (e) => {
-                text.value = e.target.value;
-                renderCallback();
-            });
-            text.addEventListener('input', (e) => {
-                const val = e.target.value;
-                if (chroma.valid(val)) {
-                    picker.value = chroma(val).hex();
-                    renderCallback();
+        function setupThemeInputs() {
+            function updateThemeColors() {
+                if (chroma.valid(lowBaseText.value) && chroma.valid(highBaseText.value)) {
+                    document.documentElement.style.setProperty('--bg-base', lowBaseText.value);
+                    document.documentElement.style.setProperty('--text-base', chroma(lowBaseText.value).luminance() < 0.5 ? '#ffffff' : '#111113');
+                    render();
                 }
-            });
-        }
-
-        themeSwitch.addEventListener('click', () => {
-            currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            themeSwitch.textContent = `Current: ${themes[currentTheme].name}`;
-
-            lowBasePicker.value = themes[currentTheme].low;
-            lowBaseText.value = themes[currentTheme].low;
-
-            highBasePicker.value = themes[currentTheme].high;
-            highBaseText.value = themes[currentTheme].high;
-
-            render();
-        });
-
-        colorName.addEventListener('input', render);
-
-        setupSync(mainColorPicker, mainColorText, render);
-        setupSync(lowBasePicker, lowBaseText, render);
-        setupSync(highBasePicker, highBaseText, render);
-
-        function formatOklch(color) {
-            if (!color) return '';
-            const [l, c, h] = chroma(color).oklch();
-            const lStr = (l * 100).toFixed(1) + '%';
-            const cStr = c ? c.toFixed(3) : '0';
-            const hStr = isNaN(h) ? '0' : h.toFixed(1);
-            return `${lStr} ${cStr} ${hStr}`;
-        }
-
-        // Custom manual Oklch Interpolation to preserve/shift Hue
-        function interpolateOklchShifted(baseColorHex, targetBgHex, ratio) {
-            // ratio: 0.0 -> full background, 1.0 -> full base color
-            const base = chroma(baseColorHex).oklch();
-            const bg = chroma(targetBgHex).oklch();
-
-            let [bL, bC, bH] = base;
-            const [gL, gC, gH] = bg;
-
-            if (isNaN(bH)) bH = 0;
-
-            // 1. Interpolate Lightness linearly
-            const resL = bL * ratio + gL * (1 - ratio);
-
-            // 2. Interpolate Chroma linearly. 
-            // Often background (like white/black) has near 0 chroma.
-            const resC = bC * ratio + (isNaN(gC) ? 0 : gC) * (1 - ratio);
-
-            // 3. Hue Shifting. 
-            // Instead of mixing with background hue (which makes it muddy),
-            // we start at base Hue, and apply a very slight temperature shift.
-            // E.g. shift slightly towards Yellow for lights, towards Blue for darks.
-            // + ratio goes from 1.0 (550 weight) down to 0.1 (extreme weights).
-            // (1 - ratio) gives us how far we are from the base color (0 to 0.9).
-            const shiftAmount = (1 - ratio) * 15; // Max 15 degrees shift at the far ends
-
-            let resH = bH;
-
-            if (gL > 0.5) {
-                // Background is light (White) -> Weight < 500
-                // We shift hue up slightly to make lighter tints a bit warmer/brighter
-                resH = bH + shiftAmount;
-            } else {
-                // Background is dark (Black) -> Weight > 500
-                // We shift hue down slightly to make dark shades a bit cooler/deeper
-                resH = bH - shiftAmount;
             }
 
-            return chroma.oklch(resL, resC, resH);
+            lowBasePicker.addEventListener('input', (e) => { lowBaseText.value = e.target.value; updateThemeColors(); });
+            lowBaseText.addEventListener('input', (e) => { if (chroma.valid(e.target.value)) { lowBasePicker.value = chroma(e.target.value).hex(); updateThemeColors(); } });
+
+            highBasePicker.addEventListener('input', (e) => { highBaseText.value = e.target.value; updateThemeColors(); });
+            highBaseText.addEventListener('input', (e) => { if (chroma.valid(e.target.value)) { highBasePicker.value = chroma(e.target.value).hex(); updateThemeColors(); } });
+
+            themeSwitchBtn.addEventListener('click', () => {
+                currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                themeSwitchBtn.textContent = `Theme: ${themes[currentTheme].name}`;
+                lowBasePicker.value = themes[currentTheme].low;
+                lowBaseText.value = themes[currentTheme].low;
+                highBasePicker.value = themes[currentTheme].high;
+                highBaseText.value = themes[currentTheme].high;
+                updateThemeColors();
+            });
+
+            showAlphaCheck.addEventListener('change', (e) => {
+                showAlpha = e.target.checked;
+                render();
+            });
+
+            addColorBtn.addEventListener('click', () => {
+                baseColors.push({ id: Date.now(), hex: chroma.random().hex(), name: 'New Color' });
+                renderSidebarColors();
+                render();
+            });
+        }
+
+        function renderSidebarColors() {
+            colorList.innerHTML = '';
+            baseColors.forEach((color, index) => {
+                const item = document.createElement('div');
+                item.className = 'color-item';
+
+                const nameInput = document.createElement('input');
+                nameInput.type = 'text';
+                nameInput.value = color.name;
+                nameInput.placeholder = 'Color Name';
+                nameInput.oninput = (e) => { color.name = e.target.value; render(); };
+
+                const row = document.createElement('div');
+                row.className = 'color-input-row';
+
+                const picker = document.createElement('input');
+                picker.type = 'color';
+                picker.value = color.hex;
+
+                const hexInput = document.createElement('input');
+                hexInput.type = 'text';
+                hexInput.value = color.hex;
+
+                picker.oninput = (e) => { hexInput.value = e.target.value; color.hex = e.target.value; updateAccentStyles(); render(); };
+                hexInput.oninput = (e) => { if (chroma.valid(e.target.value)) { picker.value = chroma(e.target.value).hex(); color.hex = e.target.value; updateAccentStyles(); render(); } };
+
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-btn';
+                removeBtn.innerHTML = '✕';
+                removeBtn.onclick = () => { if (baseColors.length > 1) { baseColors.splice(index, 1); updateAccentStyles(); renderSidebarColors(); render(); } };
+
+                row.appendChild(picker);
+                row.appendChild(hexInput);
+                row.appendChild(removeBtn);
+
+                item.appendChild(row);
+                item.appendChild(nameInput);
+                colorList.appendChild(item);
+            });
+        }
+
+        function updateAccentStyles() {
+            if (baseColors.length > 0) {
+                const mainHex = baseColors[0].hex;
+                document.documentElement.style.setProperty('--accent', mainHex);
+                const luma = chroma(mainHex).luminance();
+                const btnCols = document.querySelectorAll('.btn');
+                btnCols.forEach(btn => {
+                    if (!btn.classList.contains('btn-outline')) {
+                        btn.style.color = luma > 0.4 ? '#111113' : '#ffffff';
+                    }
+                });
+            }
+        }
+
+        function interpolateOklchShifted(baseColorHex, bgHex, ratio) {
+            const base = chroma(baseColorHex).oklch();
+            const bg = chroma(bgHex).oklch();
+            let [bL, bC, bH] = base;
+            const [gL, gC, gH] = bg;
+            if (isNaN(bH)) bH = 0;
+            const resL = bL * ratio + gL * (1 - ratio);
+            const resC = bC * ratio + (isNaN(gC) ? 0 : gC) * (1 - ratio);
+            const shiftAmount = (1 - ratio) * 15;
+            let resH = bH;
+            if (gL > 0.5) resH = bH + shiftAmount;
+            else resH = bH - shiftAmount;
+            return chroma.oklch(resL, resC, resH).hex();
         }
 
         function render() {
-            const name = colorName.value || 'color';
-            const color = mainColorPicker.value;
-            const lowBase = lowBasePicker.value;
-            const highBase = highBasePicker.value;
+            paletteTable.innerHTML = '';
 
-            // Update Dynamic Background
-            previewContent.style.setProperty('--bg-preview-color', lowBase);
-            // Decide text color for preview dynamically based on bg lightness
-            const isDarkBg = chroma(lowBase).luminance() < 0.3;
-            previewContent.style.setProperty('--text-preview-color', isDarkBg ? '#ffffff' : '#111113');
+            const keys = Object.keys(colorsMap).sort((a, b) => Number(a) - Number(b));
 
-            // Clear previous visually generated rows while keeping headers
-            const headers = Array.from(paletteGrid.querySelectorAll('.palette-header'));
-            paletteGrid.innerHTML = '';
-            headers.forEach(h => paletteGrid.appendChild(h));
+            const weightCol = document.createElement('div');
+            weightCol.className = 'palette-col';
+            weightCol.innerHTML = `<div class="palette-header">Шаг</div>`;
+            keys.forEach(k => {
+                weightCol.innerHTML += `<div class="palette-cell weight-cell">${k}</div>`;
+            });
+            paletteTable.appendChild(weightCol);
 
-            currentPaletteData = {};
+            baseColors.forEach(colorItem => {
+                const colorHex = colorItem.hex;
+                const cName = colorItem.name || 'Color';
 
-            Object.entries(colorsMap).forEach(([key, { a, c }]) => {
-                const i = Number(key);
+                const solidCol = document.createElement('div');
+                solidCol.className = 'palette-col';
+                solidCol.innerHTML = `<div class="palette-header">${cName} Solid</div>`;
 
-                const contrastBase = c > 0 ? highBase : lowBase;
-
-                // --- ADVANCED HUE SHIFT INTERPOLATION ---
-                // We use our custom function instead of simple chroma.mix
-                const solidColorChroma = interpolateOklchShifted(color, contrastBase, a);
-                const solidColorHex = solidColorChroma.hex();
-
-                // Alpha color (отсутствуют для оттенков > 500)
-                let alphaColorHex = '';
-                if (i <= 500) {
-                    alphaColorHex = chroma(color).alpha(a).hex();
+                let alphaCol;
+                if (showAlpha) {
+                    alphaCol = document.createElement('div');
+                    alphaCol.className = 'palette-col';
+                    alphaCol.innerHTML = `<div class="palette-header">${cName} Alpha</div>`;
                 }
 
-                currentPaletteData[key] = {
-                    solidHex: solidColorHex,
-                    solidOklch: formatOklch(solidColorHex),
-                    alphaHex: alphaColorHex,
-                    alphaValue: a
-                };
+                keys.forEach(k => {
+                    const { a, c } = colorsMap[k];
+                    const bg = c > 0 ? highBasePicker.value : lowBasePicker.value;
+                    const solidHex = interpolateOklchShifted(colorHex, bg, a);
 
-                // Render UI Row
-                const row = document.createElement('div');
-                row.className = 'palette-row';
+                    const textContrast = chroma(solidHex).luminance() > 0.5 ? '#111113' : '#ffffff';
+                    const [oL, oC, oH] = chroma(solidHex).oklch();
+                    const formatOklch = `${(oL * 100).toFixed(0)}% ${oC.toFixed(2)} ${isNaN(oH) ? 0 : oH.toFixed(0)}`;
 
-                const weightDiv = document.createElement('div');
-                weightDiv.className = 'palette-weight';
-                weightDiv.textContent = key;
-
-                // Render Solid block
-                const solidBlock = document.createElement('div');
-                solidBlock.className = 'color-block';
-                solidBlock.innerHTML = `
-                    <div class="color-preview" style="background-color: ${solidColorHex};"></div>
-                    <div class="color-info">
-                        <div class="color-format"><span class="format-label">HEX</span><span class="format-value">${solidColorHex.toUpperCase()}</span></div>
-                        <div class="color-format"><span class="format-label">okLCH</span><span class="format-value">${formatOklch(solidColorHex)}</span></div>
-                    </div>
-                `;
-
-                // Render Alpha block
-                const alphaBlock = document.createElement('div');
-                alphaBlock.className = 'color-block';
-                if (alphaColorHex) {
-                    alphaBlock.innerHTML = `
-                        <div class="color-preview alpha-bg">
-                            <div style="width: 100%; height: 100%; background-color: ${alphaColorHex};"></div>
-                        </div>
-                        <div class="color-info">
-                            <div class="color-format"><span class="format-label">HEX</span><span class="format-value">${alphaColorHex.toUpperCase()}</span></div>
-                            <div class="color-format"><span class="format-label">Opacity</span><span class="format-value">${a * 100}%</span></div>
+                    solidCol.innerHTML += `
+                        <div class="palette-cell">
+                            <div class="color-block" style="background-color: ${solidHex}; color: ${textContrast}">
+                                <div class="format-row"><span>HEX</span><span>${solidHex.toUpperCase()}</span></div>
+                                <div class="format-row"><span>LCH</span><span>${formatOklch}</span></div>
+                            </div>
                         </div>
                     `;
-                } else {
-                    alphaBlock.innerHTML = `<div class="missing-alpha">—</div>`;
-                }
 
-                row.appendChild(weightDiv);
-                row.appendChild(solidBlock);
-                row.appendChild(alphaBlock);
-                paletteGrid.appendChild(row);
+                    if (showAlpha) {
+                        if (Number(k) <= 500) {
+                            const aHex = chroma(colorHex).alpha(a).hex();
+                            alphaCol.innerHTML += `
+                                <div class="palette-cell">
+                                    <div class="alpha-wrap">
+                                        <div class="alpha-inner" style="background-color: ${aHex}; color: ${textContrast}">
+                                            <div class="format-row"><span>HEX</span><span>${aHex.toUpperCase()}</span></div>
+                                            <div class="format-row"><span>Op.</span><span>${a * 100}%</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            alphaCol.innerHTML += `<div class="palette-cell"><div class="missing">—</div></div>`;
+                        }
+                    }
+                });
+
+                paletteTable.appendChild(solidCol);
+                if (showAlpha) paletteTable.appendChild(alphaCol);
             });
         }
 
-        exportSvgBtn.addEventListener('click', () => {
-            const name = colorName.value || 'palette';
-
-            const swatchWidth = 200;
-            const swatchHeight = 80;
+        exportSvgBtn.addEventListener('click', async () => {
+            const swatchSize = 40;
+            const gap = 4;
             const padding = 20;
-            const headerHeight = 60;
-            const weights = Object.keys(currentPaletteData);
-            const columnsCount = 3;
-            const rowHeight = swatchHeight + 50;
+            const weights = Object.keys(colorsMap).sort((a, b) => Number(a) - Number(b));
 
-            const svgWidth = (swatchWidth * columnsCount) + (padding * 4) + 60;
-            const svgHeight = (weights.length * rowHeight) + (padding * 2) + headerHeight;
-            const isDarkBg = chroma(lowBasePicker.value).luminance() < 0.3;
-            const textColor = isDarkBg ? '#ffffff' : '#111113';
-            const textMuted = isDarkBg ? '#9094a6' : '#606476';
+            const drawThemes = [
+                { bg: themes.light.low, textBg: themes.light.high },
+                { bg: themes.dark.low, textBg: themes.dark.high }
+            ];
 
-            let svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}">
-                <rect width="${svgWidth}" height="${svgHeight}" fill="${lowBasePicker.value}" rx="16"/>
-                <text x="${padding}" y="${padding + 24}" fill="${textColor}" font-family="sans-serif" font-size="24" font-weight="bold">${name} (Advanced OkLCH Engine)</text>
-                
-                <text x="${padding}" y="${padding + headerHeight}" fill="${textMuted}" font-family="sans-serif" font-size="14" font-weight="bold">WEIGHT</text>
-                <text x="${padding + 80}" y="${padding + headerHeight}" fill="${textMuted}" font-family="sans-serif" font-size="14" font-weight="bold">SOLID COLOR</text>
-                <text x="${padding + 80 + swatchWidth + padding}" y="${padding + headerHeight}" fill="${textMuted}" font-family="sans-serif" font-size="14" font-weight="bold">ALPHA COLOR</text>
-             `;
+            const colsPerColor = showAlpha ? 2 : 1;
+            const totalCols = baseColors.length * colsPerColor;
 
-            let yOffset = padding + headerHeight + 20;
+            const themeWidth = padding * 2 + (swatchSize * totalCols) + (gap * (totalCols - 1));
+            const themeHeight = padding * 2 + (swatchSize * weights.length) + (gap * (weights.length - 1));
 
-            weights.forEach((w) => {
-                const d = currentPaletteData[w];
-                svgContent += `<text x="${padding}" y="${yOffset + (swatchHeight / 2) + 6}" fill="${textColor}" font-family="sans-serif" font-size="18" font-weight="bold">${w}</text>`;
+            const svgWidth = themeWidth * 2;
+            const svgHeight = themeHeight;
 
-                let xOffset = padding + 80;
-                svgContent += `
-                    <g transform="translate(${xOffset}, ${yOffset})">
-                        <rect width="${swatchWidth}" height="${swatchHeight}" fill="${d.solidHex}" rx="8"/>
-                        <text x="0" y="${swatchHeight + 24}" fill="${textColor}" font-family="monospace" font-size="12">HEX: ${d.solidHex.toUpperCase()}</text>
-                        <text x="0" y="${swatchHeight + 42}" fill="${textColor}" font-family="monospace" font-size="12">okLCH: ${d.solidOklch}</text>
-                    </g>
-                 `;
+            let svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}">`;
 
-                xOffset += swatchWidth + padding;
-                if (d.alphaHex) {
-                    svgContent += `
-                        <g transform="translate(${xOffset}, ${yOffset})">
-                            <rect width="${swatchWidth}" height="${swatchHeight}" fill="#2b2e3b" rx="8"/>
-                            <rect width="${swatchWidth}" height="${swatchHeight}" fill="${d.alphaHex}" rx="8"/>
-                            <text x="0" y="${swatchHeight + 24}" fill="${textColor}" font-family="monospace" font-size="12">HEX: ${d.alphaHex.toUpperCase()}</text>
-                            <text x="0" y="${swatchHeight + 42}" fill="${textColor}" font-family="monospace" font-size="12">Opacity: ${d.alphaValue * 100}%</text>
-                        </g>
-                     `;
-                } else {
-                    svgContent += `
-                        <g transform="translate(${xOffset}, ${yOffset})">
-                            <rect width="${swatchWidth}" height="${swatchHeight}" fill="${textColor}" fill-opacity="0.05" rx="8"/>
-                        </g>
-                     `;
-                }
-                yOffset += rowHeight;
+            drawThemes.forEach((t, tIndex) => {
+                const xThemeOffset = tIndex * themeWidth;
+
+                svgContent += `<rect x="${xThemeOffset}" y="0" width="${themeWidth}" height="${themeHeight}" fill="${t.bg}"/>`;
+
+                let y = padding;
+                weights.forEach(w => {
+                    const { a, c } = colorsMap[w];
+                    const targetTextBg = c > 0 ? t.textBg : t.bg;
+
+                    let x = xThemeOffset + padding;
+                    baseColors.forEach(colorItem => {
+                        const baseHex = colorItem.hex;
+                        const solidHex = interpolateOklchShifted(baseHex, targetTextBg, a);
+
+                        svgContent += `<rect x="${x}" y="${y}" width="${swatchSize}" height="${swatchSize}" fill="${solidHex}" rx="4"/>`;
+                        x += swatchSize + gap;
+
+                        if (showAlpha) {
+                            if (Number(w) <= 500) {
+                                const aHex = chroma(baseHex).alpha(a).hex();
+                                svgContent += `
+                                    <g transform="translate(${x}, ${y})">
+                                        <rect width="${swatchSize}" height="${swatchSize}" fill="${t.bg}" rx="4"/>
+                                        <rect width="${swatchSize}" height="${swatchSize}" fill="${aHex}" rx="4"/>
+                                    </g>
+                                `;
+                            }
+                            x += swatchSize + gap;
+                        }
+                    });
+                    y += swatchSize + gap;
+                });
             });
 
-            svgContent += `\n</svg>`;
+            svgContent += `</svg>`;
 
-            const blob = new Blob([svgContent], { type: "image/svg+xml" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = `${name}-palette.svg`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            const blob = new Blob([svgContent], { type: "text/plain" });
+
+            try {
+                const item = new ClipboardItem({ 'text/plain': blob });
+                await navigator.clipboard.write([item]);
+                const origText = exportSvgBtn.textContent;
+                exportSvgBtn.textContent = "SVG Скопирован!";
+                setTimeout(() => exportSvgBtn.textContent = origText, 2000);
+            } catch (e) {
+                console.error("Clipboard error", e);
+                // Fallback direct copy (works in older browsers) 
+                try {
+                    await navigator.clipboard.writeText(svgContent);
+                    const origText = exportSvgBtn.textContent;
+                    exportSvgBtn.textContent = "SVG Скопирован!";
+                    setTimeout(() => exportSvgBtn.textContent = origText, 2000);
+                } catch (fallbackE) {
+                    alert("Ошибка копирования в буфер обмена.");
+                }
+            }
         });
 
+        setupThemeInputs();
+        document.documentElement.style.setProperty('--bg-base', lowBasePicker.value);
+        document.documentElement.style.setProperty('--text-base', chroma(lowBasePicker.value).luminance() < 0.5 ? '#ffffff' : '#111113');
+        renderSidebarColors();
+        updateAccentStyles();
         render();
+
     </script>
 </body>
 
