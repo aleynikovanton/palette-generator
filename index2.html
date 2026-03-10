@@ -148,6 +148,12 @@
             filter: brightness(1.1);
         }
 
+        .btn-primary {
+            background: var(--text-base) !important;
+            color: var(--bg-base) !important;
+            font-weight: 600;
+        }
+
         .btn-outline {
             background: transparent;
             border: 1px dashed rgba(128, 128, 128, 0.4);
@@ -277,9 +283,24 @@
             </div>
         </div>
 
-        <label class="checkbox-label">
-            <input type="checkbox" id="showAlphaCheck" checked> Показывать Alpha
-        </label>
+        <div class="control-group">
+            <label class="checkbox-label">
+                <input type="checkbox" id="showAlphaCheck" checked> Показывать Alpha
+            </label>
+            <label class="checkbox-label" style="margin-top: 4px;">
+                <input type="checkbox" id="showHueShiftCheck" checked> Включить Hue Shift
+            </label>
+        </div>
+
+        <div class="control-group" style="margin-top: 8px;">
+            <label>Lightness Крайних шагов (L%)</label>
+            <div class="color-input-row" style="gap: 12px; font-family: monospace;">
+                Max:<input type="number" id="maxLightness" value="100" min="0" max="100"
+                    style="width:70px; padding: 6px; background: rgba(128,128,128,0.1); border:none; border-radius:4px; color:inherit;">
+                Min:<input type="number" id="minLightness" value="0" min="0" max="100"
+                    style="width:70px; padding: 6px; background: rgba(128,128,128,0.1); border:none; border-radius:4px; color:inherit;">
+            </div>
+        </div>
 
         <hr style="border: none; border-top: 1px dashed rgba(128,128,128,0.3);">
 
@@ -289,7 +310,7 @@
             <button class="btn btn-outline" id="addColorBtn">+ Добавить цвет</button>
         </div>
 
-        <button class="btn" id="exportSvgBtn" style="margin-top: 20px;">
+        <button class="btn btn-primary" id="exportSvgBtn" style="margin-top: 20px;">
             Скопировать SVG в буфер
         </button>
     </div>
@@ -314,6 +335,7 @@
 
         let currentTheme = 'dark';
         let showAlpha = true;
+        let useHueShift = true;
         let baseColors = [
             { id: Date.now(), hex: '#027bf3', name: 'Brand' }
         ];
@@ -324,6 +346,9 @@
         const highBasePicker = document.getElementById('highBasePicker');
         const highBaseText = document.getElementById('highBaseText');
         const showAlphaCheck = document.getElementById('showAlphaCheck');
+        const showHueShiftCheck = document.getElementById('showHueShiftCheck');
+        const maxLightnessInput = document.getElementById('maxLightness');
+        const minLightnessInput = document.getElementById('minLightness');
         const colorList = document.getElementById('colorList');
         const addColorBtn = document.getElementById('addColorBtn');
         const paletteTable = document.getElementById('paletteTable');
@@ -358,6 +383,14 @@
                 showAlpha = e.target.checked;
                 render();
             });
+
+            showHueShiftCheck.addEventListener('change', (e) => {
+                useHueShift = e.target.checked;
+                render();
+            });
+
+            maxLightnessInput.addEventListener('input', render);
+            minLightnessInput.addEventListener('input', render);
 
             addColorBtn.addEventListener('click', () => {
                 baseColors.push({ id: Date.now(), hex: chroma.random().hex(), name: 'New Color' });
@@ -421,18 +454,34 @@
             }
         }
 
-        function interpolateOklchShifted(baseColorHex, bgHex, ratio) {
+        function interpolateOklchShifted(baseColorHex, bgHex, ratio, cDirection) {
             const base = chroma(baseColorHex).oklch();
             const bg = chroma(bgHex).oklch();
             let [bL, bC, bH] = base;
             const [gL, gC, gH] = bg;
             if (isNaN(bH)) bH = 0;
-            const resL = bL * ratio + gL * (1 - ratio);
+
+            let maxL = parseFloat(maxLightnessInput.value) / 100;
+            if (isNaN(maxL)) maxL = 1.0;
+            let minL = parseFloat(minLightnessInput.value) / 100;
+            if (isNaN(minL)) minL = 0.0;
+
+            let targetL = gL;
+            if (cDirection < 0) {
+                targetL = maxL;
+            } else if (cDirection > 0) {
+                targetL = minL;
+            }
+
+            const resL = bL * ratio + targetL * (1 - ratio);
             const resC = bC * ratio + (isNaN(gC) ? 0 : gC) * (1 - ratio);
-            const shiftAmount = (1 - ratio) * 15;
+
             let resH = bH;
-            if (gL > 0.5) resH = bH + shiftAmount;
-            else resH = bH - shiftAmount;
+            if (useHueShift) {
+                const shiftAmount = (1 - ratio) * 15;
+                if (cDirection < 0) resH = bH + shiftAmount;
+                else resH = bH - shiftAmount;
+            }
             return chroma.oklch(resL, resC, resH).hex();
         }
 
@@ -467,7 +516,7 @@
                 keys.forEach(k => {
                     const { a, c } = colorsMap[k];
                     const bg = c > 0 ? highBasePicker.value : lowBasePicker.value;
-                    const solidHex = interpolateOklchShifted(colorHex, bg, a);
+                    const solidHex = interpolateOklchShifted(colorHex, bg, a, c);
 
                     const textContrast = chroma(solidHex).luminance() > 0.5 ? '#111113' : '#ffffff';
                     const [oL, oC, oH] = chroma(solidHex).oklch();
@@ -541,7 +590,7 @@
                     let x = xThemeOffset + padding;
                     baseColors.forEach(colorItem => {
                         const baseHex = colorItem.hex;
-                        const solidHex = interpolateOklchShifted(baseHex, targetTextBg, a);
+                        const solidHex = interpolateOklchShifted(baseHex, targetTextBg, a, c);
 
                         svgContent += `<rect x="${x}" y="${y}" width="${swatchSize}" height="${swatchSize}" fill="${solidHex}" rx="4"/>`;
                         x += swatchSize + gap;
