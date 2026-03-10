@@ -114,6 +114,7 @@
 
         input[type="color"] {
             -webkit-appearance: none;
+            appearance: none;
             border: none;
             width: 32px;
             height: 32px;
@@ -321,11 +322,11 @@
 
     <script>
         const colorsMap = {
-            50: { a: 0.1, c: -1 }, 100: { a: 0.15, c: -1 }, 150: { a: 0.2, c: -1 }, 200: { a: 0.3, c: -1 },
-            250: { a: 0.4, c: -1 }, 300: { a: 0.5, c: -1 }, 350: { a: 0.6, c: -1 }, 400: { a: 0.7, c: -1 },
+            50: { a: 0.04, c: -1 }, 100: { a: 0.08, c: -1 }, 150: { a: 0.12, c: -1 }, 200: { a: 0.2, c: -1 },
+            250: { a: 0.3, c: -1 }, 300: { a: 0.4, c: -1 }, 350: { a: 0.5, c: -1 }, 400: { a: 0.65, c: -1 },
             450: { a: 0.8, c: -1 }, 500: { a: 0.9, c: -1 }, 550: { a: 1, c: 1 }, 600: { a: 0.9, c: 1 },
-            650: { a: 0.8, c: 1 }, 700: { a: 0.7, c: 1 }, 750: { a: 0.6, c: 1 }, 800: { a: 0.5, c: 1 },
-            850: { a: 0.4, c: 1 }, 900: { a: 0.3, c: 1 }, 950: { a: 0.2, c: 1 }, 1000: { a: 0.15, c: 1 },
+            650: { a: 0.8, c: 1 }, 700: { a: 0.7, c: 1 }, 750: { a: 0.6, c: 1 }, 800: { a: 0.45, c: 1 },
+            850: { a: 0.3, c: 1 }, 900: { a: 0.2, c: 1 }, 950: { a: 0.1, c: 1 }, 1000: { a: 0.04, c: 1 },
         };
 
         const themes = {
@@ -466,11 +467,12 @@
             let minL = parseFloat(minLightnessInput.value) / 100;
             if (isNaN(minL)) minL = 0.0;
 
+            // Limit the background lightness (gL) based on user constraints
             let targetL = gL;
-            if (cDirection < 0) {
-                targetL = maxL;
-            } else if (cDirection > 0) {
-                targetL = minL;
+            if (targetL > 0.5) {
+                targetL = Math.min(targetL, maxL);
+            } else {
+                targetL = Math.max(targetL, minL);
             }
 
             const resL = bL * ratio + targetL * (1 - ratio);
@@ -478,9 +480,10 @@
 
             let resH = bH;
             if (useHueShift) {
+                // Determine direction based on target background Lightness (targetL)
                 const shiftAmount = (1 - ratio) * 15;
-                if (cDirection < 0) resH = bH + shiftAmount;
-                else resH = bH - shiftAmount;
+                if (targetL > 0.5) resH = bH + shiftAmount; // Towards Light -> warmer
+                else resH = bH - shiftAmount;               // Towards Dark -> cooler
             }
             return chroma.oklch(resL, resC, resH).hex();
         }
