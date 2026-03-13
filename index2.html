@@ -112,6 +112,21 @@
             color: #ff4d4f;
         }
 
+        .format-toggle-btn {
+            background: rgba(128,128,128,0.1);
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            color: inherit;
+            font-family: monospace;
+        }
+        .format-toggle-btn:hover {
+            background: rgba(128,128,128,0.2);
+        }
+
         input[type="color"] {
             -webkit-appearance: none;
             appearance: none;
@@ -192,7 +207,7 @@
         }
 
         .weight-cell {
-            width: 40px;
+            width: 60px;
             font-weight: 600;
             font-size: 14px;
             opacity: 0.7;
@@ -267,20 +282,28 @@
             <p style="font-size: 13px; opacity: 0.7;">Dynamic Custom Colors, No Dark Borders, SVG Clipboard Export.</p>
         </div>
 
-        <button class="btn btn-outline" id="themeSwitchBtn" style="border-style: solid;">Theme: Dark</button>
+        <button class="btn btn-outline" id="themeSwitchBtn" style="border-style: solid;">Theme: Light</button>
 
         <div class="control-group">
             <label>Low Contrast Base (Фон)</label>
             <div class="color-input-row">
-                <input type="color" id="lowBasePicker" value="#111113">
-                <input type="text" id="lowBaseText" value="#111113">
+                <input type="color" id="lowBasePicker" value="#ffffff">
+                <input type="text" id="lowBaseText" value="#ffffff">
             </div>
         </div>
         <div class="control-group">
             <label>High Contrast Base (Текст)</label>
             <div class="color-input-row">
-                <input type="color" id="highBasePicker" value="#ffffff">
-                <input type="text" id="highBaseText" value="#ffffff">
+                <input type="color" id="highBasePicker" value="#111113">
+                <input type="text" id="highBaseText" value="#111113">
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label>Neutral Base Color</label>
+            <div class="color-input-row">
+                <input type="color" id="neutralBasePicker" value="#808080">
+                <input type="text" id="neutralBaseText" value="#808080">
             </div>
         </div>
 
@@ -290,6 +313,9 @@
             </label>
             <label class="checkbox-label" style="margin-top: 4px;">
                 <input type="checkbox" id="showHueShiftCheck" checked> Включить Hue Shift
+            </label>
+            <label class="checkbox-label" style="margin-top: 4px;">
+                <input type="checkbox" id="showNeutralsCheck"> Нейтральные (Grey Balance)
             </label>
         </div>
 
@@ -334,11 +360,12 @@
             dark: { low: '#111113', high: '#ffffff', name: 'Dark' }
         };
 
-        let currentTheme = 'dark';
+        let currentTheme = 'light';
         let showAlpha = true;
         let useHueShift = true;
+        let showNeutrals = false;
         let baseColors = [
-            { id: Date.now(), hex: '#027bf3', name: 'Brand' }
+            { id: Date.now(), format: 'HEX', value: '#027bf3', hex: '#027bf3', name: 'Brand' }
         ];
 
         const themeSwitchBtn = document.getElementById('themeSwitchBtn');
@@ -346,8 +373,11 @@
         const lowBaseText = document.getElementById('lowBaseText');
         const highBasePicker = document.getElementById('highBasePicker');
         const highBaseText = document.getElementById('highBaseText');
+        const neutralBasePicker = document.getElementById('neutralBasePicker');
+        const neutralBaseText = document.getElementById('neutralBaseText');
         const showAlphaCheck = document.getElementById('showAlphaCheck');
         const showHueShiftCheck = document.getElementById('showHueShiftCheck');
+        const showNeutralsCheck = document.getElementById('showNeutralsCheck');
         const maxLightnessInput = document.getElementById('maxLightness');
         const minLightnessInput = document.getElementById('minLightness');
         const colorList = document.getElementById('colorList');
@@ -370,6 +400,9 @@
             highBasePicker.addEventListener('input', (e) => { highBaseText.value = e.target.value; updateThemeColors(); });
             highBaseText.addEventListener('input', (e) => { if (chroma.valid(e.target.value)) { highBasePicker.value = chroma(e.target.value).hex(); updateThemeColors(); } });
 
+            neutralBasePicker.addEventListener('input', (e) => { neutralBaseText.value = e.target.value; render(); });
+            neutralBaseText.addEventListener('input', (e) => { if (chroma.valid(e.target.value)) { neutralBasePicker.value = chroma(e.target.value).hex(); render(); } });
+
             themeSwitchBtn.addEventListener('click', () => {
                 currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
                 themeSwitchBtn.textContent = `Theme: ${themes[currentTheme].name}`;
@@ -390,11 +423,17 @@
                 render();
             });
 
+            showNeutralsCheck.addEventListener('change', (e) => {
+                showNeutrals = e.target.checked;
+                render();
+            });
+
             maxLightnessInput.addEventListener('input', render);
             minLightnessInput.addEventListener('input', render);
 
             addColorBtn.addEventListener('click', () => {
-                baseColors.push({ id: Date.now(), hex: chroma.random().hex(), name: 'New Color' });
+                const newHex = chroma.random().hex();
+                baseColors.push({ id: Date.now(), format: 'HEX', value: newHex, hex: newHex, name: 'New Color' });
                 renderSidebarColors();
                 render();
             });
@@ -419,12 +458,53 @@
                 picker.type = 'color';
                 picker.value = color.hex;
 
-                const hexInput = document.createElement('input');
-                hexInput.type = 'text';
-                hexInput.value = color.hex;
+                const formatBtn = document.createElement('button');
+                formatBtn.className = 'format-toggle-btn';
+                formatBtn.innerText = color.format;
 
-                picker.oninput = (e) => { hexInput.value = e.target.value; color.hex = e.target.value; updateAccentStyles(); render(); };
-                hexInput.oninput = (e) => { if (chroma.valid(e.target.value)) { picker.value = chroma(e.target.value).hex(); color.hex = e.target.value; updateAccentStyles(); render(); } };
+                const textInput = document.createElement('input');
+                textInput.type = 'text';
+                textInput.value = color.value;
+
+                formatBtn.onclick = () => {
+                    color.format = color.format === 'HEX' ? 'HSL' : 'HEX';
+                    formatBtn.innerText = color.format;
+                    if(color.format === 'HEX') {
+                        textInput.value = color.hex;
+                        color.value = color.hex;
+                    } else {
+                        const [h, s, l] = chroma(color.hex).hsl();
+                        textInput.value = `${isNaN(h)?0:Math.round(h)}, ${Math.round(s*100)}%, ${Math.round(l*100)}%`;
+                        color.value = textInput.value;
+                    }
+                };
+
+                picker.oninput = (e) => { 
+                    color.hex = e.target.value; 
+                    if(color.format === 'HEX') {
+                        textInput.value = color.hex;
+                        color.value = color.hex;
+                    } else {
+                        const [h, s, l] = chroma(color.hex).hsl();
+                        textInput.value = `${isNaN(h)?0:Math.round(h)}, ${Math.round(s*100)}%, ${Math.round(l*100)}%`;
+                        color.value = textInput.value;
+                    }
+                    updateAccentStyles(); render(); 
+                };
+                textInput.oninput = (e) => { 
+                    color.value = e.target.value;
+                    let parsedHex = null;
+                    if(color.format === 'HSL') {
+                        try { parsedHex = chroma(`hsl(${e.target.value})`).hex(); } catch(err){}
+                    } else {
+                        if(chroma.valid(e.target.value)) parsedHex = chroma(e.target.value).hex();
+                    }
+                    if (parsedHex) {
+                        picker.value = parsedHex; 
+                        color.hex = parsedHex; 
+                        updateAccentStyles(); render(); 
+                    }
+                };
 
                 const removeBtn = document.createElement('button');
                 removeBtn.className = 'remove-btn';
@@ -432,7 +512,8 @@
                 removeBtn.onclick = () => { if (baseColors.length > 1) { baseColors.splice(index, 1); updateAccentStyles(); renderSidebarColors(); render(); } };
 
                 row.appendChild(picker);
-                row.appendChild(hexInput);
+                row.appendChild(formatBtn);
+                row.appendChild(textInput);
                 row.appendChild(removeBtn);
 
                 item.appendChild(row);
@@ -453,6 +534,27 @@
                     }
                 });
             }
+        }
+
+        function getBalancedGrayL(target_L, target_C, hue) {
+            // Logic: Concession curve (Hue-specific Lightness Offsets)
+            // Baseline: Blue (#3E63DD, L ~ 0.544) -> Gray L ~ 0.485 (Delta ~ -0.06 or ~11% reduction)
+            
+            let sensitivity = 0.28; // Default for "Heavy" colors (Blue, Indigo, Violet)
+            let offset = 0;
+
+            if ((hue >= 0 && hue <= 40) || (hue >= 280 && hue <= 360)) {
+                // Red, Orange, Purple ("Medium")
+                sensitivity = 0.15;
+                offset = 0.03; // Allow 15% (relative to delta) lighter
+            } else if (hue >= 40 && hue <= 160) {
+                // Yellow, Lime, Green ("Light")
+                sensitivity = 0.05;
+                offset = 0.06; // Allow 30% (relative to delta) lighter
+            }
+
+            let balancedL = target_L - (target_C * sensitivity) + offset;
+            return Math.max(0, Math.min(1, balancedL));
         }
 
         function interpolateOklchShifted(baseColorHex, bgHex, ratio, cDirection) {
@@ -497,7 +599,9 @@
             weightCol.className = 'palette-col';
             weightCol.innerHTML = `<div class="palette-header">Шаг</div>`;
             keys.forEach(k => {
-                weightCol.innerHTML += `<div class="palette-cell weight-cell">${k}</div>`;
+                weightCol.innerHTML += `<div class="palette-cell weight-cell">
+                    <div>${k}</div>
+                </div>`;
             });
             paletteTable.appendChild(weightCol);
 
@@ -514,6 +618,13 @@
                     alphaCol = document.createElement('div');
                     alphaCol.className = 'palette-col';
                     alphaCol.innerHTML = `<div class="palette-header">${cName} Alpha</div>`;
+                }
+
+                let neutralCol;
+                if (showNeutrals) {
+                    neutralCol = document.createElement('div');
+                    neutralCol.className = 'palette-col';
+                    neutralCol.innerHTML = `<div class="palette-header">${cName} Gray</div>`;
                 }
 
                 keys.forEach(k => {
@@ -542,7 +653,7 @@
                                     <div class="alpha-wrap">
                                         <div class="alpha-inner" style="background-color: ${aHex}; color: ${textContrast}">
                                             <div class="format-row"><span>HEX</span><span>${aHex.toUpperCase()}</span></div>
-                                            <div class="format-row"><span>Op.</span><span>${a * 100}%</span></div>
+                                            <div class="format-row"><span>Op.</span><span>${(a * 100).toFixed(0)}%</span></div>
                                         </div>
                                     </div>
                                 </div>
@@ -551,10 +662,33 @@
                             alphaCol.innerHTML += `<div class="palette-cell"><div class="missing">—</div></div>`;
                         }
                     }
+                    
+                    if (showNeutrals) {
+                        const accentOk = chroma(colorHex).oklch();
+                        const balancedL = getBalancedGrayL(accentOk[0], accentOk[1], accentOk[2]);
+                        
+                        // Use manual neutral base for Chroma/Hue, but calculated Lightness
+                        const nBaseOk = chroma(neutralBasePicker.value).oklch();
+                        const neutralBaseHex = chroma.oklch(balancedL, nBaseOk[1], nBaseOk[2]).hex();
+                        
+                        const nHex = interpolateOklchShifted(neutralBaseHex, bg, a, c);
+                        const nContrast = chroma(nHex).luminance() > 0.5 ? '#111113' : '#ffffff';
+                        const nOklch = chroma(nHex).oklch();
+                        const nFormat = `${(nOklch[0] * 100).toFixed(0)}% ${nOklch[1].toFixed(2)}`;
+                        neutralCol.innerHTML += `
+                            <div class="palette-cell">
+                                <div class="color-block" style="background-color: ${nHex}; color: ${nContrast}">
+                                    <div class="format-row"><span>HEX</span><span>${nHex.toUpperCase()}</span></div>
+                                    <div class="format-row"><span>LCH</span><span>${nFormat}</span></div>
+                                </div>
+                            </div>
+                        `;
+                    }
                 });
 
                 paletteTable.appendChild(solidCol);
                 if (showAlpha) paletteTable.appendChild(alphaCol);
+                if (showNeutrals) paletteTable.appendChild(neutralCol);
             });
         }
 
@@ -569,7 +703,8 @@
                 { bg: themes.dark.low, textBg: themes.dark.high }
             ];
 
-            const colsPerColor = showAlpha ? 2 : 1;
+            const neutralColsPerColor = showNeutrals ? 1 : 0;
+            const colsPerColor = (showAlpha ? 2 : 1) + neutralColsPerColor;
             const totalCols = baseColors.length * colsPerColor;
 
             const themeWidth = padding * 2 + (swatchSize * totalCols) + (gap * (totalCols - 1));
@@ -608,6 +743,16 @@
                                     </g>
                                 `;
                             }
+                            x += swatchSize + gap;
+                        }
+                        
+                        if (showNeutrals) {
+                            const accentOk = chroma(baseHex).oklch();
+                            const balancedL = getBalancedGrayL(accentOk[0], accentOk[1], accentOk[2]);
+                            const nBaseOk = chroma(neutralBasePicker.value).oklch();
+                            const neutralBaseHex = chroma.oklch(balancedL, nBaseOk[1], nBaseOk[2]).hex();
+                            const nHex = interpolateOklchShifted(neutralBaseHex, targetTextBg, a, c);
+                            svgContent += `<rect x="${x}" y="${y}" width="${swatchSize}" height="${swatchSize}" fill="${nHex}" rx="4"/>`;
                             x += swatchSize + gap;
                         }
                     });
