@@ -465,6 +465,17 @@
         }
 
         async function copyToClipboard(text, element) {
+            try {
+                await navigator.clipboard.writeText(text);
+                const originalText = element.innerText;
+                element.innerText = 'Copied!';
+                setTimeout(() => element.innerText = originalText, 1000);
+            } catch (err) {
+                console.error('Failed to copy', err);
+            }
+        }
+
+        function renderSidebarColors() {
             colorList.innerHTML = '';
             baseColors.forEach((color, index) => {
                 const item = document.createElement('div');
