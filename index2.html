@@ -12,6 +12,8 @@
             --bg-base: #111113;
             --text-base: #ffffff;
             --accent: #027bf3;
+            --card-bg: rgba(128, 128, 128, 0.05);
+            --card-border: rgba(128, 128, 128, 0.1);
             --checkers: repeating-conic-gradient(rgba(128, 128, 128, 0.1) 0% 25%, transparent 0% 50%) 50% / 10px 10px;
         }
 
@@ -22,75 +24,84 @@
         }
 
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background-color: var(--bg-base);
             color: var(--text-base);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            padding: 20px;
-            transition: background-color 0.3s, color 0.3s;
+            padding: 0;
+            transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .top-bar {
             display: flex;
             flex-wrap: wrap;
-            align-items: flex-end;
-            gap: 24px;
-            padding: 20px;
-            background: rgba(128, 128, 128, 0.05);
-            border-radius: 12px;
-            margin-bottom: 32px;
+            align-items: center;
+            gap: 20px;
+            padding: 16px 32px;
+            background: rgba(20, 20, 22, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--card-border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         .top-bar-branding {
-            min-width: 250px;
+            margin-right: 12px;
         }
 
         .top-bar-branding h1 {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 4px;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
         }
 
         .top-bar-branding p {
-            font-size: 11px;
-            opacity: 0.6;
-        }
-
-        .content {
-            flex-grow: 1;
-            overflow-x: auto;
-            padding: 0 10px;
-        }
-
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .control-group label {
-            font-size: 11px;
-            font-weight: 600;
+            font-size: 10px;
             opacity: 0.5;
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
 
-        input[type="text"], input[type="number"] {
-            background: rgba(128, 128, 128, 0.1);
-            border: none;
-            border-radius: 6px;
-            padding: 8px 10px;
-            color: inherit;
-            font-family: monospace;
-            font-size: 13px;
-            outline: none;
+        .content {
+            flex-grow: 1;
+            padding: 40px 32px;
+            overflow: auto;
         }
 
-        input[type="text"]:focus {
-            box-shadow: 0 0 0 2px var(--accent);
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .control-group label {
+            font-size: 10px;
+            font-weight: 700;
+            opacity: 0.4;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input[type="text"], input[type="number"] {
+            background: rgba(128, 128, 128, 0.08);
+            border: 1px solid transparent;
+            border-radius: 8px;
+            padding: 6px 12px;
+            color: inherit;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus {
+            background: rgba(128, 128, 128, 0.12);
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(2, 123, 243, 0.15);
         }
 
         .color-input-row {
@@ -99,45 +110,32 @@
             align-items: center;
         }
 
-        input[type="color"] {
-            -webkit-appearance: none;
-            appearance: none;
-            border: none;
-            width: 28px;
-            height: 28px;
-            border-radius: 4px;
-            cursor: pointer;
-            padding: 0;
-            background: none;
-        }
-
-        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
-        input[type="color"]::-webkit-color-swatch { border: none; border-radius: 4px; }
-
         .btn {
             background: var(--accent);
             color: #fff;
             border: none;
-            border-radius: 6px;
-            padding: 10px 16px;
+            border-radius: 8px;
+            padding: 0 16px;
             font-size: 13px;
-            font-weight: 500;
+            font-weight: 600;
             cursor: pointer;
-            transition: filter 0.2s;
-            height: 38px;
+            transition: all 0.2s;
+            height: 34px;
             display: flex;
             align-items: center;
             justify-content: center;
+            gap: 6px;
         }
 
-        .btn:hover { filter: brightness(1.1); }
-        .btn-primary { background: var(--text-base) !important; color: var(--bg-base) !important; font-weight: 600; }
-        .btn-outline { background: transparent; border: 1px solid rgba(128, 128, 128, 0.3); color: inherit; }
+        .btn:hover { transform: translateY(-1px); filter: brightness(1.1); }
+        .btn:active { transform: translateY(0); }
+        .btn-primary { background: var(--text-base) !important; color: var(--bg-base) !important; }
+        .btn-outline { background: rgba(128, 128, 128, 0.1); border: 1px solid var(--card-border); color: inherit; }
+        .btn-outline:hover { background: rgba(128, 128, 128, 0.15); }
 
         .palette-table {
             display: flex;
-            gap: 20px;
-            padding-bottom: 60px;
+            gap: 32px;
             width: max-content;
         }
 
@@ -147,158 +145,182 @@
 
         .palette-group {
             display: flex;
-            flex-direction: column;
-            gap: 0; /* Changed to 0 as we use cell gaps */
-            padding: 4px;
-            border-radius: 12px;
-            transition: all 0.2s;
+            flex-direction: row;
+            gap: 12px;
+            padding: 8px;
+            border-radius: 16px;
+            background: transparent;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
         }
-        
+
         .palette-col {
             display: flex;
             flex-direction: column;
             gap: 6px;
+            min-width: 140px;
         }
 
-        .palette-table.compare-mode .palette-group {
+        .compare-mode .palette-group {
             padding: 0;
+            gap: 0;
         }
 
         .palette-group.dragging {
-            opacity: 0.4;
-            background: rgba(128, 128, 128, 0.05);
+            opacity: 0.3;
+            transform: scale(0.98);
         }
 
-        .palette-group.drag-over {
-            box-shadow: 0 0 0 2px var(--accent);
+        .palette-group.drag-over::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border: 2px dashed var(--accent);
+            border-radius: 20px;
+            pointer-events: none;
         }
 
-        .palette-header {
-            font-size: 13px;
-            font-weight: 600;
-            opacity: 0.7;
-            padding: 12px 0 20px 0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        /* New Column Input Styles */
         .col-input-card {
-            background: rgba(128, 128, 128, 0.05);
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
             border-radius: 12px;
             padding: 12px;
             margin-bottom: 24px;
             display: flex;
             flex-direction: column;
             gap: 8px;
-            width: 156px; /* 140 + padding */
-            position: relative;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        
+        .col-input-card:hover {
+            background: rgba(128, 128, 128, 0.08);
+            border-color: rgba(128, 128, 128, 0.2);
         }
 
         .col-input-name {
             background: transparent !important;
-            font-weight: 600;
-            font-size: 14px;
+            font-weight: 700;
+            font-size: 13px;
             padding: 0 !important;
             height: 24px;
+            border: none;
+            outline: none;
+            color: inherit;
         }
 
         .col-input-hex-row {
-            background: rgba(128, 128, 128, 0.08);
+            background: rgba(255, 255, 255, 0.05);
             border-radius: 8px;
             display: flex;
             align-items: center;
-            padding: 4px 8px;
-            gap: 8px;
-        }
-
-        .col-hex-label {
-            font-size: 10px;
-            font-weight: 700;
-            opacity: 0.4;
+            padding: 4px;
+            gap: 6px;
         }
 
         .col-hex-value {
-            font-family: monospace;
-            font-size: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
             flex-grow: 1;
             background: transparent !important;
             padding: 0 !important;
+            border: none;
+            outline: none;
+            color: inherit;
         }
 
         .col-remove-btn {
-            background: none;
+            background: transparent;
             border: none;
             color: inherit;
-            opacity: 0.3;
+            opacity: 0.2;
             cursor: pointer;
             padding: 4px;
             font-size: 14px;
+            line-height: 1;
+            transition: all 0.2s;
         }
-        .col-remove-btn:hover { opacity: 1; color: #ff4d4f; }
+        .col-remove-btn:hover { opacity: 1; color: #ff4d4f; transform: scale(1.1); }
 
         .palette-cell {
             height: 48px;
             display: flex;
             align-items: center;
-            margin-bottom: 6px;
         }
 
         .weight-cell {
-            width: 60px;
-            font-weight: 600;
-            font-size: 13px;
-            opacity: 0.4;
+            width: 50px;
+            font-weight: 700;
+            font-size: 11px;
+            opacity: 0.3;
             justify-content: flex-end;
             padding-right: 16px;
             cursor: pointer;
             user-select: none;
+            transition: all 0.2s;
         }
-        .weight-cell:hover { opacity: 1; color: var(--accent); }
-        .weight-cell.focused { opacity: 1; color: var(--accent); font-size: 15px; }
+        .palette-table:not(.compare-mode) .weight-cell:hover { opacity: 1; color: var(--accent); transform: scale(1.1); }
+        .weight-cell.focused { opacity: 1; color: var(--accent); font-size: 14px; }
 
         .color-block {
             width: 140px;
             height: 48px;
-            border-radius: 6px;
+            border-radius: 8px;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            padding: 0 10px;
+            padding: 0 12px;
             border: none;
-            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
         }
 
-        .compare-mode .palette-group { width: 140px; }
-        .compare-mode .palette-col { width: 140px; }
+        .compare-mode .palette-group { width: auto; }
+        .compare-mode .palette-col { min-width: 100px; flex-grow: 1; }
         .compare-mode .color-block { border-radius: 0; width: 100%; }
-        .compare-mode .palette-cell:not(.visible-comparing) { opacity: 0.1; filter: blur(2px); }
+        .compare-mode .palette-cell:not(.visible-comparing) { 
+            height: 0; 
+            margin: 0; 
+            opacity: 0; 
+            overflow: hidden; 
+            pointer-events: none;
+        }
+        .compare-mode .visible-comparing {
+            height: 400px;
+            align-items: flex-start;
+        }
+        .compare-mode .visible-comparing .color-block {
+            height: 100%;
+        }
         .compare-mode .visible-comparing .format-row { display: none; }
+        .compare-mode .col-input-card { display: none; }
+        .compare-mode .weight-cell:not(.focused) { opacity: 0; }
 
         .format-row {
             display: flex;
             justify-content: space-between;
-            font-family: monospace;
-            font-size: 10px;
-            opacity: 0.8;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            font-weight: 600;
+            opacity: 0.7;
         }
 
         .format-row span.copyable {
             cursor: copy;
-            padding: 1px 3px;
-            border-radius: 3px;
+            padding: 1px 4px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            transition: background 0.2s;
         }
-
-        .format-row span.copyable:hover { background: rgba(128, 128, 128, 0.2); }
+        .format-row span.copyable:hover { background: rgba(255, 255, 255, 0.2); }
 
         .alpha-wrap {
             width: 140px;
             height: 48px;
-            border-radius: 6px;
+            border-radius: 8px;
             background-image: var(--checkers);
             overflow: hidden;
-            transition: width 0.3s;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .alpha-inner {
@@ -307,34 +329,39 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
-            padding: 0 10px;
+            padding: 0 12px;
         }
 
         .checkbox-label {
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 12px;
+            gap: 6px;
+            font-size: 11px;
             cursor: pointer;
             user-select: none;
-            font-weight: 500;
+            font-weight: 600;
+            opacity: 0.6;
+            transition: opacity 0.2s;
         }
+        .checkbox-label:hover { opacity: 1; }
+        .checkbox-label input { accent-color: var(--accent); }
         
         .header-drag-handle {
             cursor: grab;
-            opacity: 0.3;
-            font-size: 16px;
-            position: absolute;
-            top: 4px;
-            left: 50%;
-            transform: translateX(-50%);
+            opacity: 0.2;
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 4px;
+            width: 100%;
         }
+        .header-drag-handle:active { cursor: grabbing; }
         
         #resetBtn {
            margin-left: auto;
-           opacity: 0.6;
+           opacity: 0.4;
+           padding: 0 10px;
         }
-        #resetBtn:hover { opacity: 1; }
+        #resetBtn:hover { opacity: 1; color: #ff4d4f; }
     </style>
 </head>
 
@@ -516,8 +543,9 @@
             minLightnessInput.addEventListener('input', render);
 
             addColorBtn.addEventListener('click', () => {
-                const newHex = chroma.random().hex();
-                baseColors.push({ id: Date.now(), format: 'HEX', value: newHex, hex: newHex, name: 'New Color' });
+                const colors = ['#3E63DD', '#E5484D', '#F76B15', '#30A46C', '#00A2C7', '#AB4ABA'];
+                const randColor = colors[Math.floor(Math.random() * colors.length)];
+                baseColors.push({ id: Date.now(), format: 'HEX', value: randColor, hex: randColor, name: 'New Color' });
                 render();
             });
 
@@ -609,10 +637,14 @@
                 group.draggable = true;
                 group.dataset.index = index;
 
+                // Solid Column (Main)
+                const solidCol = document.createElement('div');
+                solidCol.className = 'palette-col';
+
                 // Input Card
                 const card = document.createElement('div');
                 card.className = 'col-input-card';
-                card.innerHTML = `<span class="header-drag-handle">⋮⋮</span>`;
+                card.innerHTML = `<div class="header-drag-handle">⋮⋮</div>`;
                 
                 const nameInp = document.createElement('input');
                 nameInp.className = 'col-input-name';
@@ -646,14 +678,30 @@
                 hexRow.appendChild(hexVal);
                 hexRow.appendChild(remBtn);
                 card.appendChild(hexRow);
-                group.appendChild(card);
+                solidCol.appendChild(card);
 
-                const solidCol = document.createElement('div');
-                solidCol.className = 'palette-col';
-
-                let alphaCol, neutralCol;
-                if (showAlpha) { alphaCol = document.createElement('div'); alphaCol.className = 'palette-col'; }
-                if (showNeutrals) { neutralCol = document.createElement('div'); neutralCol.className = 'palette-col'; }
+                // Sub-columns for Alpha and Neutral
+                let alphaCol = null, neutralCol = null;
+                if (showAlpha) {
+                    alphaCol = document.createElement('div');
+                    alphaCol.className = 'palette-col';
+                    const h = document.createElement('div');
+                    h.className = 'col-input-card';
+                    h.style.background = 'transparent';
+                    h.style.border = 'none';
+                    h.innerHTML = `<div class="control-group"><label>${colorItem.name} Alpha</label></div>`;
+                    if (!focusedStep) alphaCol.appendChild(h);
+                }
+                if (showNeutrals) {
+                    neutralCol = document.createElement('div');
+                    neutralCol.className = 'palette-col';
+                    const h = document.createElement('div');
+                    h.className = 'col-input-card';
+                    h.style.background = 'transparent';
+                    h.style.border = 'none';
+                    h.innerHTML = `<div class="control-group"><label>${colorItem.name} Gray</label></div>`;
+                    if (!focusedStep) neutralCol.appendChild(h);
+                }
 
                 keys.forEach(k => {
                     const { a, c } = colorsMap[k];
@@ -665,33 +713,37 @@
                     const [oL, oC, oH] = chroma(solidHex).oklch();
                     const formatOklch = `${(oL * 100).toFixed(0)}% ${oC.toFixed(2)} ${Math.round(oH||0)}`;
                     
-                    solidCol.innerHTML += `
-                        <div class="palette-cell ${isFocused?'visible-comparing':''}">
-                            <div class="color-block" style="background-color: ${solidHex}; color: ${textContrast}"
-                                 onmousedown="document.body.style.backgroundColor='${solidHex}'"
-                                 onmouseup="document.body.style.backgroundColor=''"
-                                 onmouseleave="document.body.style.backgroundColor=''">
-                                <div class="format-row"><span>HEX</span><span class="copyable" onclick="copyToClipboard('${solidHex.toUpperCase()}', this)">${solidHex.toUpperCase()}</span></div>
-                                <div class="format-row"><span>LCH</span><span>${formatOklch}</span></div>
-                            </div>
+                    const sCell = document.createElement('div');
+                    sCell.className = `palette-cell ${isFocused?'visible-comparing':''}`;
+                    sCell.innerHTML = `
+                        <div class="color-block" style="background-color: ${solidHex}; color: ${textContrast}"
+                             onmousedown="document.body.style.backgroundColor='${solidHex}'"
+                             onmouseup="document.body.style.backgroundColor=''"
+                             onmouseleave="document.body.style.backgroundColor=''">
+                            <div class="format-row"><span>HEX</span><span class="copyable" onclick="copyToClipboard('${solidHex.toUpperCase()}', this)">${solidHex.toUpperCase()}</span></div>
+                            <div class="format-row"><span>LCH</span><span>${formatOklch}</span></div>
                         </div>`;
+                    solidCol.appendChild(sCell);
 
                     if (showAlpha) {
+                        const aCell = document.createElement('div');
+                        aCell.className = `palette-cell ${isFocused?'visible-comparing':''}`;
                         if (Number(k) <= 500) {
                             const aHex = chroma(colorHex).alpha(a).hex();
-                            alphaCol.innerHTML += `
-                                <div class="palette-cell ${isFocused?'visible-comparing':''}">
-                                    <div class="alpha-wrap" onmousedown="document.body.style.backgroundColor='${aHex}'" onmouseup="document.body.style.backgroundColor=''" onmouseleave="document.body.style.backgroundColor=''">
-                                        <div class="alpha-inner" style="background-color: ${aHex}; color: ${textContrast}">
-                                            <div class="format-row"><span>HEX</span><span class="copyable" onclick="copyToClipboard('${aHex.toUpperCase()}', this)">${aHex.toUpperCase()}</span></div>
-                                            <div class="format-row"><span>Op.</span><span>${(a * 100).toFixed(0)}%</span></div>
-                                        </div>
+                            aCell.innerHTML = `
+                                <div class="alpha-wrap" onmousedown="document.body.style.backgroundColor='${aHex}'" onmouseup="document.body.style.backgroundColor=''" onmouseleave="document.body.style.backgroundColor=''">
+                                    <div class="alpha-inner" style="background-color: ${aHex}; color: ${textContrast}">
+                                        <div class="format-row"><span>HEX</span><span class="copyable" onclick="copyToClipboard('${aHex.toUpperCase()}', this)">${aHex.toUpperCase()}</span></div>
+                                        <div class="format-row"><span>Op.</span><span>${(a * 100).toFixed(0)}%</span></div>
                                     </div>
                                 </div>`;
-                        } else { alphaCol.innerHTML += `<div class="palette-cell ${isFocused?'visible-comparing':''}"><div style="width:140px; text-align:center; opacity:0.1">—</div></div>`; }
+                        } else { aCell.innerHTML = `<div style="width:140px; text-align:center; opacity:0.1">—</div>`; }
+                        alphaCol.appendChild(aCell);
                     }
                     
                     if (showNeutrals) {
+                        const nCell = document.createElement('div');
+                        nCell.className = `palette-cell ${isFocused?'visible-comparing':''}`;
                         const accentOk = chroma(colorHex).oklch();
                         const balancedL = getBalancedGrayL(accentOk[0], accentOk[1], accentOk[2]);
                         const grayColor = baseColors.find(c => c.name.toLowerCase() === 'gray');
@@ -700,13 +752,12 @@
                         const nHex = interpolateOklchShifted(neutralBaseHex, bg, a, c);
                         const nContrast = chroma(nHex).luminance() > 0.5 ? '#111113' : '#ffffff';
                         const nOklch = chroma(nHex).oklch();
-                        neutralCol.innerHTML += `
-                            <div class="palette-cell ${isFocused?'visible-comparing':''}">
-                                <div class="color-block" style="background-color: ${nHex}; color: ${nContrast}" onmousedown="document.body.style.backgroundColor='${nHex}'" onmouseup="document.body.style.backgroundColor=''" onmouseleave="document.body.style.backgroundColor=''">
-                                    <div class="format-row"><span>HEX</span><span class="copyable" onclick="copyToClipboard('${nHex.toUpperCase()}', this)">${nHex.toUpperCase()}</span></div>
-                                    <div class="format-row"><span>LCH</span><span>${(nOklch[0]*100).toFixed(0)}% ${nOklch[1].toFixed(2)}</span></div>
-                                </div>
+                        nCell.innerHTML = `
+                            <div class="color-block" style="background-color: ${nHex}; color: ${nContrast}" onmousedown="document.body.style.backgroundColor='${nHex}'" onmouseup="document.body.style.backgroundColor=''" onmouseleave="document.body.style.backgroundColor=''">
+                                <div class="format-row"><span>HEX</span><span class="copyable" onclick="copyToClipboard('${nHex.toUpperCase()}', this)">${nHex.toUpperCase()}</span></div>
+                                <div class="format-row"><span>LCH</span><span>${(nOklch[0]*100).toFixed(0)}% ${nOklch[1].toFixed(2)}</span></div>
                             </div>`;
+                        neutralCol.appendChild(nCell);
                     }
                 });
 
