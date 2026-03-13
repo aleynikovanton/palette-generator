@@ -83,20 +83,6 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
-            cursor: grab;
-            padding: 8px;
-            border-radius: 8px;
-            border: 1px solid transparent;            
-        }
-
-        .color-item:active {
-            cursor: grabbing;
-        }
-
-        .color-item.dragging {
-            opacity: 0.5;
-            border: 1px dashed rgba(128,128,128,0.5);
-            background: rgba(128,128,128,0.05);
         }
 
         .color-input-row {
@@ -201,6 +187,26 @@
             padding-bottom: 40px;
         }
 
+        .palette-group {
+            display: flex;
+            gap: 32px;
+            padding: 8px;
+            margin: -8px 0;
+            border-radius: 12px;
+            border: 2px dashed transparent;
+            transition: all 0.2s;
+        }
+
+        .palette-group.dragging {
+            opacity: 0.4;
+            background: rgba(128, 128, 128, 0.05);
+        }
+
+        .palette-group.drag-over {
+            border-color: var(--accent);
+            background: rgba(128, 128, 128, 0.1);
+        }
+
         .palette-col {
             display: flex;
             flex-direction: column;
@@ -208,10 +214,45 @@
         }
 
         .palette-header {
-            font-size: 12px;
+            font-size: 13px;
             font-weight: 600;
-            opacity: 0.5;
+            opacity: 0.7;
             padding-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 4px;
+            margin-left: auto;
+        }
+
+        .header-btn {
+            background: rgba(128, 128, 128, 0.1);
+            border: none;
+            color: inherit;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 10px;
+            cursor: pointer;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+        
+        .header-btn:hover {
+            opacity: 1;
+            background: rgba(128, 128, 128, 0.2);
+        }
+
+        .header-drag-handle {
+            cursor: grab;
+            padding: 2px 4px;
+            opacity: 0.5;
+        }
+        .header-drag-handle:active {
+            cursor: grabbing;
         }
 
         .palette-cell {
@@ -480,56 +521,12 @@
             baseColors.forEach((color, index) => {
                 const item = document.createElement('div');
                 item.className = 'color-item';
-                item.draggable = true;
-                item.dataset.index = index;
-
-                item.addEventListener('dragstart', (e) => {
-                    item.classList.add('dragging');
-                    e.dataTransfer.setData('text/plain', index);
-                });
-
-                item.addEventListener('dragend', () => {
-                    item.classList.remove('dragging');
-                });
-
-                item.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                });
-
-                item.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    const draggedIndex = parseInt(e.dataTransfer.getData('text/plain'));
-                    if (draggedIndex === index) return;
-                    
-                    const draggedColor = baseColors[draggedIndex];
-                    baseColors.splice(draggedIndex, 1);
-                    baseColors.splice(index, 0, draggedColor);
-                    
-                    renderSidebarColors();
-                    render();
-                });
-
-                const dragHeader = document.createElement('div');
-                dragHeader.style.display = 'flex';
-                dragHeader.style.alignItems = 'center';
-                dragHeader.style.gap = '8px';
-
-                const dragHandle = document.createElement('div');
-                dragHandle.innerHTML = '⋮⋮';
-                dragHandle.style.cursor = 'grab';
-                dragHandle.style.opacity = '0.3';
-                dragHandle.style.fontSize = '12px';
-                dragHandle.style.lineHeight = '1';
-                dragHandle.title = 'Потяните, чтобы изменить порядок';
 
                 const nameInput = document.createElement('input');
                 nameInput.type = 'text';
                 nameInput.value = color.name;
                 nameInput.placeholder = 'Color Name';
                 nameInput.oninput = (e) => { color.name = e.target.value; render(); };
-                
-                dragHeader.appendChild(dragHandle);
-                dragHeader.appendChild(nameInput);
 
                 const row = document.createElement('div');
                 row.className = 'color-input-row';
@@ -596,7 +593,7 @@
                 row.appendChild(textInput);
                 row.appendChild(removeBtn);
 
-                item.appendChild(dragHeader);
+                item.appendChild(nameInput);
                 item.appendChild(row);
                 colorList.appendChild(item);
             });
@@ -685,13 +682,76 @@
             });
             paletteTable.appendChild(weightCol);
 
-            baseColors.forEach(colorItem => {
+            baseColors.forEach((colorItem, index) => {
                 const colorHex = colorItem.hex;
                 const cName = colorItem.name || 'Color';
 
+                const group = document.createElement('div');
+                group.className = 'palette-group';
+                group.draggable = true;
+                group.dataset.index = index;
+
+                // Drag & drop logic for palette-group
+                group.addEventListener('dragstart', (e) => {
+                    group.classList.add('dragging');
+                    e.dataTransfer.setData('text/plain', index);
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+
+                group.addEventListener('dragend', () => {
+                    group.classList.remove('dragging');
+                    document.querySelectorAll('.palette-group').forEach(g => g.classList.remove('drag-over'));
+                });
+
+                group.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    group.classList.add('drag-over');
+                });
+                
+                group.addEventListener('dragleave', () => {
+                    group.classList.remove('drag-over');
+                });
+
+                group.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    group.classList.remove('drag-over');
+                    const draggedIndex = parseInt(e.dataTransfer.getData('text/plain'));
+                    if (draggedIndex === index) return;
+                    
+                    const draggedColor = baseColors[draggedIndex];
+                    baseColors.splice(draggedIndex, 1);
+                    baseColors.splice(index, 0, draggedColor);
+                    
+                    renderSidebarColors();
+                    render();
+                });
+
                 const solidCol = document.createElement('div');
                 solidCol.className = 'palette-col';
-                solidCol.innerHTML = `<div class="palette-header">${cName} Solid</div>`;
+                
+                const visibilityIcon = colorItem.isHidden ? '👁️‍🗨️' : '👁️';
+                
+                solidCol.innerHTML = `
+                    <div class="palette-header">
+                        <span class="header-drag-handle" title="Перетаскивайте за этот блок">⋮⋮</span>
+                        ${cName} Solid
+                        <div class="header-actions">
+                            <button class="header-btn toggle-visibility-btn">${visibilityIcon}</button>
+                        </div>
+                    </div>`;
+
+                // Add event listener to the icon
+                solidCol.querySelector('.toggle-visibility-btn').addEventListener('click', () => {
+                    colorItem.isHidden = !colorItem.isHidden;
+                    render();
+                });
+                
+                if (colorItem.isHidden) {
+                    group.appendChild(solidCol);
+                    paletteTable.appendChild(group);
+                    return; // Skip rendering the cells for this color
+                }
 
                 let alphaCol;
                 if (showAlpha) {
@@ -780,9 +840,11 @@
                     }
                 });
 
-                paletteTable.appendChild(solidCol);
-                if (showAlpha) paletteTable.appendChild(alphaCol);
-                if (showNeutrals) paletteTable.appendChild(neutralCol);
+                group.appendChild(solidCol);
+                if (showAlpha) group.appendChild(alphaCol);
+                if (showNeutrals) group.appendChild(neutralCol);
+                
+                paletteTable.appendChild(group);
             });
         }
 
@@ -821,6 +883,7 @@
 
                     let x = xThemeOffset + padding;
                     baseColors.forEach(colorItem => {
+                        if (colorItem.isHidden) return;
                         const baseHex = colorItem.hex;
                         const solidHex = interpolateOklchShifted(baseHex, targetTextBg, a, c);
 
