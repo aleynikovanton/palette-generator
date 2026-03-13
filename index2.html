@@ -367,10 +367,10 @@
 
         <div class="control-group">
             <label class="checkbox-label">
-                <input type="checkbox" id="showAlphaCheck" checked> Показывать Alpha
+                <input type="checkbox" id="showAlphaCheck"> Показывать Alpha
             </label>
             <label class="checkbox-label" style="margin-top: 4px;">
-                <input type="checkbox" id="showHueShiftCheck" checked> Включить Hue Shift
+                <input type="checkbox" id="showHueShiftCheck"> Включить Hue Shift
             </label>
             <label class="checkbox-label" style="margin-top: 4px;">
                 <input type="checkbox" id="showNeutralsCheck"> Нейтральные (Grey Balance)
@@ -419,8 +419,8 @@
         };
 
         let currentTheme = 'light';
-        let showAlpha = true;
-        let useHueShift = true;
+        let showAlpha = false;
+        let useHueShift = false;
         let showNeutrals = false;
         let baseColors = [
             { id: 12, format: 'HEX', value: '#606060', hex: '#606060', name: 'Gray' },
@@ -453,6 +453,48 @@
         const addColorBtn = document.getElementById('addColorBtn');
         const paletteTable = document.getElementById('paletteTable');
         const exportSvgBtn = document.getElementById('exportSvgBtn');
+
+        function savePalette() {
+            const data = {
+                currentTheme,
+                showAlpha,
+                useHueShift,
+                showNeutrals,
+                baseColors,
+                lowBase: lowBaseText.value,
+                highBase: highBaseText.value,
+                maxL: maxLightnessInput.value,
+                minL: minLightnessInput.value
+            };
+            localStorage.setItem('oklch-palette-data', JSON.stringify(data));
+        }
+
+        function loadPalette() {
+            const saved = localStorage.getItem('oklch-palette-data');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    currentTheme = data.currentTheme || 'light';
+                    showAlpha = data.showAlpha !== undefined ? data.showAlpha : false;
+                    useHueShift = data.useHueShift !== undefined ? data.useHueShift : false;
+                    showNeutrals = data.showNeutrals !== undefined ? data.showNeutrals : false;
+                    baseColors = data.baseColors || baseColors;
+                    
+                    themeSwitchBtn.textContent = `Theme: ${themes[currentTheme].name}`;
+                    lowBasePicker.value = data.lowBase || themes[currentTheme].low;
+                    lowBaseText.value = data.lowBase || themes[currentTheme].low;
+                    highBasePicker.value = data.highBase || themes[currentTheme].high;
+                    highBaseText.value = data.highBase || themes[currentTheme].high;
+                    
+                    showAlphaCheck.checked = showAlpha;
+                    showHueShiftCheck.checked = useHueShift;
+                    showNeutralsCheck.checked = showNeutrals;
+                    
+                    maxLightnessInput.value = data.maxL || 100;
+                    minLightnessInput.value = data.minL || 0;
+                } catch(e) { console.error("Load fail", e); }
+            }
+        }
 
         function setupThemeInputs() {
             function updateThemeColors() {
@@ -731,121 +773,122 @@
                 solidCol.className = 'palette-col';
                 
                 const visibilityIcon = colorItem.isHidden ? '👁️‍🗨️' : '👁️';
+                const hiddenStyle = colorItem.isHidden ? 'opacity: 0.5; filter: grayscale(1);' : '';
                 
                 solidCol.innerHTML = `
-                    <div class="palette-header">
+                    <div class="palette-header" style="${hiddenStyle}">
                         <span class="header-drag-handle" title="Перетаскивайте за этот блок">⋮⋮</span>
                         ${cName} Solid
                         <div class="header-actions">
-                            <button class="header-btn toggle-visibility-btn">${visibilityIcon}</button>
+                            <button type="button" class="header-btn toggle-visibility-btn" title="${colorItem.isHidden ? 'Показать' : 'Скрыть'}">${visibilityIcon}</button>
                         </div>
                     </div>`;
 
                 // Add event listener to the icon
-                solidCol.querySelector('.toggle-visibility-btn').addEventListener('click', () => {
+                solidCol.querySelector('.toggle-visibility-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
                     colorItem.isHidden = !colorItem.isHidden;
                     render();
                 });
                 
-                if (colorItem.isHidden) {
-                    group.appendChild(solidCol);
-                    paletteTable.appendChild(group);
-                    return; // Skip rendering the cells for this color
-                }
-
-                let alphaCol;
-                if (showAlpha) {
-                    alphaCol = document.createElement('div');
-                    alphaCol.className = 'palette-col';
-                    alphaCol.innerHTML = `<div class="palette-header">${cName} Alpha</div>`;
-                }
-
-                let neutralCol;
-                if (showNeutrals) {
-                    neutralCol = document.createElement('div');
-                    neutralCol.className = 'palette-col';
-                    neutralCol.innerHTML = `<div class="palette-header">${cName} Gray</div>`;
-                }
-
-                keys.forEach(k => {
-                    const { a, c } = colorsMap[k];
-                    const bg = c > 0 ? highBasePicker.value : lowBasePicker.value;
-                    const solidHex = interpolateOklchShifted(colorHex, bg, a, c);
-
-                    const textContrast = chroma(solidHex).luminance() > 0.5 ? '#111113' : '#ffffff';
-                    const [oL, oC, oH] = chroma(solidHex).oklch();
-                    const formatOklch = `${(oL * 100).toFixed(0)}% ${oC.toFixed(2)} ${isNaN(oH) ? 0 : oH.toFixed(0)}`;
-                    solidCol.innerHTML += `
-                        <div class="palette-cell">
-                            <div class="color-block" style="background-color: ${solidHex}; color: ${textContrast}"
-                                 onmousedown="document.body.style.backgroundColor='${solidHex}'"
-                                 onmouseup="document.body.style.backgroundColor=''"
-                                 onmouseleave="document.body.style.backgroundColor=''">
-                                <div class="format-row"><span>HEX</span><span class="copyable" onclick="copyToClipboard('${solidHex.toUpperCase()}', this)" title="Copy HEX">${solidHex.toUpperCase()}</span></div>
-                                <div class="format-row"><span>LCH</span><span>${formatOklch}</span></div>
-                            </div>
-                        </div>
-                    `;
-
+                if (!colorItem.isHidden) {
+                    let alphaCol;
                     if (showAlpha) {
-                        if (Number(k) <= 500) {
-                            const aHex = chroma(colorHex).alpha(a).hex();
-                            alphaCol.innerHTML += `
-                                <div class="palette-cell">
-                                    <div class="alpha-wrap"
-                                         onmousedown="document.body.style.backgroundColor='${aHex}'"
-                                         onmouseup="document.body.style.backgroundColor=''"
-                                         onmouseleave="document.body.style.backgroundColor=''">
-                                        <div class="alpha-inner" style="background-color: ${aHex}; color: ${textContrast}">
-                                            <div class="format-row"><span>HEX</span><span class="copyable" onclick="copyToClipboard('${aHex.toUpperCase()}', this)" title="Copy HEX">${aHex.toUpperCase()}</span></div>
-                                            <div class="format-row"><span>Op.</span><span>${(a * 100).toFixed(0)}%</span></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
-                        } else {
-                            alphaCol.innerHTML += `<div class="palette-cell"><div class="missing">—</div></div>`;
-                        }
+                        alphaCol = document.createElement('div');
+                        alphaCol.className = 'palette-col';
+                        alphaCol.innerHTML = `<div class="palette-header">${cName} Alpha</div>`;
                     }
-                    
-                    if (showNeutrals) {
-                        const accentOk = chroma(colorHex).oklch();
-                        const balancedL = getBalancedGrayL(accentOk[0], accentOk[1], accentOk[2]);
-                        
-                        // Look for a color named "Gray" to use as foundation for chroma/hue
-                        let foundationHex = '#808080'; 
-                        const grayColor = baseColors.find(c => c.name.toLowerCase() === 'gray');
-                        if (grayColor) {
-                            foundationHex = grayColor.hex;
-                        }
 
-                        const nBaseOk = chroma(foundationHex).oklch();
-                        const neutralBaseHex = chroma.oklch(balancedL, nBaseOk[1], nBaseOk[2]).hex();
-                        
-                        const nHex = interpolateOklchShifted(neutralBaseHex, bg, a, c);
-                        const nContrast = chroma(nHex).luminance() > 0.5 ? '#111113' : '#ffffff';
-                        const nOklch = chroma(nHex).oklch();
-                        const nFormat = `${(nOklch[0] * 100).toFixed(0)}% ${nOklch[1].toFixed(2)}`;
-                        neutralCol.innerHTML += `
+                    let neutralCol;
+                    if (showNeutrals) {
+                        neutralCol = document.createElement('div');
+                        neutralCol.className = 'palette-col';
+                        neutralCol.innerHTML = `<div class="palette-header">${cName} Gray</div>`;
+                    }
+
+                    keys.forEach(k => {
+                        const { a, c } = colorsMap[k];
+                        const bg = c > 0 ? highBasePicker.value : lowBasePicker.value;
+                        const solidHex = interpolateOklchShifted(colorHex, bg, a, c);
+
+                        const textContrast = chroma(solidHex).luminance() > 0.5 ? '#111113' : '#ffffff';
+                        const [oL, oC, oH] = chroma(solidHex).oklch();
+                        const formatOklch = `${(oL * 100).toFixed(0)}% ${oC.toFixed(2)} ${isNaN(oH) ? 0 : oH.toFixed(0)}`;
+                        solidCol.innerHTML += `
                             <div class="palette-cell">
-                                <div class="color-block" style="background-color: ${nHex}; color: ${nContrast}"
-                                     onmousedown="document.body.style.backgroundColor='${nHex}'"
+                                <div class="color-block" style="background-color: ${solidHex}; color: ${textContrast}"
+                                     onmousedown="document.body.style.backgroundColor='${solidHex}'"
                                      onmouseup="document.body.style.backgroundColor=''"
                                      onmouseleave="document.body.style.backgroundColor=''">
-                                    <div class="format-row"><span>HEX</span><span class="copyable" onclick="copyToClipboard('${nHex.toUpperCase()}', this)" title="Copy HEX">${nHex.toUpperCase()}</span></div>
-                                    <div class="format-row"><span>LCH</span><span>${nFormat}</span></div>
+                                    <div class="format-row"><span>HEX</span><span class="copyable" onclick="copyToClipboard('${solidHex.toUpperCase()}', this)" title="Copy HEX">${solidHex.toUpperCase()}</span></div>
+                                    <div class="format-row"><span>LCH</span><span>${formatOklch}</span></div>
                                 </div>
                             </div>
                         `;
-                    }
-                });
 
-                group.appendChild(solidCol);
-                if (showAlpha) group.appendChild(alphaCol);
-                if (showNeutrals) group.appendChild(neutralCol);
-                
+                        if (showAlpha) {
+                            if (Number(k) <= 500) {
+                                const aHex = chroma(colorHex).alpha(a).hex();
+                                alphaCol.innerHTML += `
+                                    <div class="palette-cell">
+                                        <div class="alpha-wrap"
+                                             onmousedown="document.body.style.backgroundColor='${aHex}'"
+                                             onmouseup="document.body.style.backgroundColor=''"
+                                             onmouseleave="document.body.style.backgroundColor=''">
+                                            <div class="alpha-inner" style="background-color: ${aHex}; color: ${textContrast}">
+                                                <div class="format-row"><span>HEX</span><span class="copyable" onclick="copyToClipboard('${aHex.toUpperCase()}', this)" title="Copy HEX">${aHex.toUpperCase()}</span></div>
+                                                <div class="format-row"><span>Op.</span><span>${(a * 100).toFixed(0)}%</span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            } else {
+                                alphaCol.innerHTML += `<div class="palette-cell"><div class="missing">—</div></div>`;
+                            }
+                        }
+                        
+                        if (showNeutrals) {
+                            const accentOk = chroma(colorHex).oklch();
+                            const balancedL = getBalancedGrayL(accentOk[0], accentOk[1], accentOk[2]);
+                            
+                            let foundationHex = '#808080'; 
+                            const grayColor = baseColors.find(c => c.name.toLowerCase() === 'gray');
+                            if (grayColor) {
+                                foundationHex = grayColor.hex;
+                            }
+
+                            const nBaseOk = chroma(foundationHex).oklch();
+                            const neutralBaseHex = chroma.oklch(balancedL, nBaseOk[1], nBaseOk[2]).hex();
+                            
+                            const nHex = interpolateOklchShifted(neutralBaseHex, bg, a, c);
+                            const nContrast = chroma(nHex).luminance() > 0.5 ? '#111113' : '#ffffff';
+                            const nOklch = chroma(nHex).oklch();
+                            const nFormat = `${(nOklch[0] * 100).toFixed(0)}% ${nOklch[1].toFixed(2)}`;
+                            neutralCol.innerHTML += `
+                                <div class="palette-cell">
+                                    <div class="color-block" style="background-color: ${nHex}; color: ${nContrast}"
+                                         onmousedown="document.body.style.backgroundColor='${nHex}'"
+                                         onmouseup="document.body.style.backgroundColor=''"
+                                         onmouseleave="document.body.style.backgroundColor=''">
+                                        <div class="format-row"><span>HEX</span><span class="copyable" onclick="copyToClipboard('${nHex.toUpperCase()}', this)" title="Copy HEX">${nHex.toUpperCase()}</span></div>
+                                        <div class="format-row"><span>LCH</span><span>${nFormat}</span></div>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    });
+
+                    group.appendChild(solidCol);
+                    if (showAlpha) group.appendChild(alphaCol);
+                    if (showNeutrals) group.appendChild(neutralCol);
+                } else {
+                    group.appendChild(solidCol);
+                }
+
                 paletteTable.appendChild(group);
             });
+
+            savePalette();
         }
 
         exportSvgBtn.addEventListener('click', async () => {
@@ -948,6 +991,7 @@
             }
         });
 
+        loadPalette();
         setupThemeInputs();
         document.documentElement.style.setProperty('--bg-base', lowBasePicker.value);
         document.documentElement.style.setProperty('--text-base', chroma(lowBasePicker.value).luminance() < 0.5 ? '#ffffff' : '#111113');
